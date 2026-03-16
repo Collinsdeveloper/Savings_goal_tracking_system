@@ -1,0 +1,80 @@
+START SavingsGoalTrackingSystem
+
+// Function to create a new savings goal for a user
+FUNCTION CreateSavingsGoal(UserID, GoalName, TargetAmount, TargetDate)
+    // Store the user ID, goal name, target amount, target date
+    // Initialize AmountSaved to 0 because no money is saved yet
+    STORE UserID, GoalName, TargetAmount, TargetDate, AmountSaved = 0
+    
+    // Return confirmation that goal is created successfully
+    RETURN "Savings Goal Created Successfully"
+END FUNCTION
+
+// Function to update the savings progress for a user
+FUNCTION UpdateSavingsProgress(UserID, AmountAdded)
+    // Retrieve current saved amount for this user
+    RETRIEVE AmountSaved for UserID
+    
+    // Add the new amount to the current saved amount
+    AmountSaved = AmountSaved + AmountAdded
+    
+    // Store the updated amount back in the system
+    STORE updated AmountSaved
+    
+    // Return confirmation message
+    RETURN "Savings Progress Updated"
+END FUNCTION
+
+// Function to check the status of the user's savings goal
+FUNCTION CheckGoalStatus(UserID)
+    // Retrieve target amount, current saved amount, and target date for the user
+    RETRIEVE TargetAmount, AmountSaved, TargetDate for UserID
+    
+    // Get the current date
+    CURRENT_DATE = getTodayDate()
+    
+    // Determine the goal status
+    IF AmountSaved >= TargetAmount THEN
+        // User has reached or exceeded their target
+        RETURN "Goal Met"
+    ELSE IF CURRENT_DATE > TargetDate THEN
+        // User has not reached the target and the deadline has passed
+        RETURN "Goal Overdue"
+    ELSE
+        // User has not reached the target but deadline is still in the future
+        RETURN "Goal Pending"
+    END IF
+END FUNCTION
+
+// Function to notify the user when goal is approaching and not met
+FUNCTION SendNotification(UserID)
+    // Check the current status of the goal
+    Status = CheckGoalStatus(UserID)
+    
+    // Get current date and target date for comparison
+    CURRENT_DATE = getTodayDate()
+    TargetDate = retrieve TargetDate for UserID
+    
+    // Calculate number of days left to reach goal
+    DaysLeft = TargetDate - CURRENT_DATE
+    
+    // Send notification only if goal is not met and less than or equal to 7 days left
+    IF Status != "Goal Met" AND DaysLeft <= 7 THEN
+        // Compose notification message
+        COMPOSE NotificationMessage = "Your savings goal is approaching and target not reached!"
+        
+        // Send the notification to the user
+        SEND NotificationMessage to UserID
+    END IF
+END FUNCTION
+
+// Function to display the user's current savings progress
+FUNCTION DisplaySavingsProgress(UserID)
+    // Retrieve current saved amount and target amount
+    RETRIEVE AmountSaved, TargetAmount for UserID
+    
+    // Return message showing progress
+    RETURN "You have saved " + AmountSaved + " out of " + TargetAmount
+END FUNCTION
+
+END SavingsGoalTrackingSystem
